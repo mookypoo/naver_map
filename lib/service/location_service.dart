@@ -1,14 +1,9 @@
 import 'package:geolocator/geolocator.dart';
 
-class LocationClass {
-  final double latitude;
-  final double longitude;
-
-  LocationClass({required this.latitude, required this.longitude});
-}
+import '../custom_class/location_class.dart';
 
 class LocationService {
-  final LocationClass _hongdae = LocationClass(latitude: 37.558514, longitude: 126.925544);
+  static const LocationClass initLocation = LocationClass(latitude: 37.545150, longitude: 126.922929);
 
   Future<LocationPermission> hasLocationPermission() async => await Geolocator.checkPermission();
 
@@ -16,17 +11,18 @@ class LocationService {
 
   Future<LocationPermission> requestLocation() async => await Geolocator.requestPermission();
 
-  Future<Position> currentLocation() async => await Geolocator.getCurrentPosition();
+  Future<LocationClass> currentLocation() async {
+    final Position _position = await Geolocator.getCurrentPosition();
+    return LocationClass(latitude: _position.latitude, longitude: _position.longitude);
+  }
 
-  Future<LocationClass> initLocation() async {
+  Future<bool> canGetCurrentLocation() async {
     final LocationPermission _permission = await this.hasLocationPermission();
     if (_permission == LocationPermission.always || _permission == LocationPermission.whileInUse) {
       final bool _enabled = await this.isLocationEnabled();
-      if (_enabled) {
-        final Position _currentLocation = await this.currentLocation();
-        return LocationClass(latitude: _currentLocation.latitude, longitude: _currentLocation.longitude);
-      }
+      if (_enabled) return true;
     }
-    return this._hongdae;
+    return false;
   }
 }
+
