@@ -4,6 +4,7 @@ import 'package:naver_map_plugin/naver_map_plugin.dart' show LocationTrackingMod
 
 import '../custom_class/location_class.dart';
 import '../custom_class/marker_class.dart';
+import '../custom_class/store_class.dart' show StoreType;
 import '../practice_data.dart';
 
 class MapProvider with ChangeNotifier {
@@ -16,6 +17,9 @@ class MapProvider with ChangeNotifier {
     Future(this.setCurrentLocation);
   }
 
+  StoreType? _selectedStore;
+  StoreType? get selectedStore => this._selectedStore;
+  set selectedStore(StoreType? s) => throw "error";
 
   LocationTrackingMode _trackingMode = LocationTrackingMode.None;
   LocationTrackingMode get trackingMode => this._trackingMode;
@@ -26,6 +30,12 @@ class MapProvider with ChangeNotifier {
       this._trackingMode = LocationTrackingMode.Follow;
       this.notifyListeners();
     }
+  }
+
+  void onTapMarker(String uid){
+    final StoreType _store = PracticeData.myStores.firstWhere((StoreType s) => s.uid == uid);
+    this._selectedStore = _store;
+    this.notifyListeners();
   }
 
 }

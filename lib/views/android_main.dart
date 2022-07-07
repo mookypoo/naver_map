@@ -1,11 +1,8 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:naver_map/custom_class/marker_class.dart';
+import 'package:naver_map/views/components/store_info_widget.dart';
 import 'package:naver_map_plugin/naver_map_plugin.dart' as naver;
 
-import '../custom_class/location_class.dart';
-import '../custom_class/store_class.dart';
 import '../providers/map_provider.dart';
 
 class AndroidMain extends StatefulWidget {
@@ -17,6 +14,9 @@ class AndroidMain extends StatefulWidget {
 }
 
 class _AndroidMainState extends State<AndroidMain> {
+  bool _showBottomSheet = false;
+
+  naver.NaverMapController? _ct;
 
   @override
   void initState() {
@@ -24,8 +24,11 @@ class _AndroidMainState extends State<AndroidMain> {
       if (!this.mounted) return;
       this.widget.mapProvider.myMarkers.forEach((CustomMarker marker) {
         marker.createImage(context);
-        marker.setOnMarkerTab((marker, iconSize) {
-          print(marker.captionText);
+        marker.setOnMarkerTab((naver.Marker marker, Map<String, int> iconSize) async {
+          this._showBottomSheet = true;
+          this.widget.mapProvider.onTapMarker(marker.markerId);
+          await this._ct?.moveCamera(naver.CameraUpdate.scrollTo(marker.position));
+          //this._ct?.moveCamera(naver.CameraUpdate.fitBounds(bounds));
         });
       });
     });
@@ -35,21 +38,36 @@ class _AndroidMainState extends State<AndroidMain> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: naver.NaverMap(
-        initLocationTrackingMode: this.widget.mapProvider.trackingMode,
-        initialCameraPosition: naver.CameraPosition(target: this.widget.mapProvider.initLocation),
-        locationButtonEnable: true,
-        onMapCreated: (naver.NaverMapController ct) async {
+      body: Stack(
+        children: <Widget>[
+          naver.NaverMap(
 
-        },
-        markers: this.widget.mapProvider.myMarkers,
-      ),
+            zoomGestureEnable: true,
+            initLocationTrackingMode: this.widget.mapProvider.trackingMode,
+            initialCameraPosition: naver.CameraPosition(target: this.widget.mapProvider.initLocation),
+            locationButtonEnable: true,
+            onMapTap: (naver.LatLng ln) {
+              this.setState(() {
+                this._showBottomSheet = false;
+              });
+            },
+            onMapCreated: (naver.NaverMapController ct) {
+              this._ct = ct;
+            },
+            markers: this.widget.mapProvider.myMarkers,
+
+          ),
+          this._showBottomSheet
+            ? StoreInfoWidget(store: this.widget.mapProvider.selectedStore)
+            : Container(),
+        ],
+      )
     );
   }
 }
 
 
-// Completer<naver.NaverMapController> _controller = Completer();
+//
 //
 // void _onMapCreated(naver.NaverMapController controller) {
 //   if (_controller.isCompleted) _controller = Completer();
